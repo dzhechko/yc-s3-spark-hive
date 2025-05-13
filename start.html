@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сервисы Яндекс Облака для задачи S3 + Spark + Hive + Trino</title>
+    <style>
+        :root {
+            --primary-color: #3D4EAE;
+            --secondary-color: #FFCC00;
+            --accent-color: #FC3F1D;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --border-color: #ddd;
+        }
+        
+        body {
+            font-family: 'Yandex Sans', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-bottom: 5px solid var(--accent-color);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        
+        h3 {
+            color: var(--primary-color);
+            margin-top: 30px;
+        }
+        
+        .intro {
+            background-color: var(--light-gray);
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .architecture {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .architecture img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .service-card {
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .service-card h3 {
+            color: var(--accent-color);
+            margin-top: 0;
+        }
+        
+        .feature-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .feature-list li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 10px;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            color: var(--accent-color);
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .link-button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .link-button:hover {
+            background-color: var(--accent-color);
+        }
+        
+        .integration-section {
+            background-color: var(--light-gray);
+            padding: 20px;
+            border-radius: 5px;
+            margin: 30px 0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+            background-color: var(--light-gray);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .questions-section {
+            background-color: #f9f9f9;
+            padding: 20px 25px;
+            border-left: 5px solid var(--accent-color);
+            margin: 30px 0;
+        }
+        
+        .question-category {
+            margin-bottom: 25px;
+        }
+        
+        .questions-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .questions-list li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .questions-list li:before {
+            content: "?";
+            color: var(--accent-color);
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-weight: bold;
+        }
+        
+        /* Стиль для диаграммы архитектуры (имитация) */
+        .architecture-diagram {
+            max-width: 100%;
+            height: 400px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .diagram-box {
+            position: absolute;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            padding: 10px;
+            background-color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .diagram-arrow {
+            position: absolute;
+            border-top: 2px solid var(--primary-color);
+            width: 100px;
+            transform-origin: left center;
+        }
+        
+        .diagram-arrow:after {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: -5px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid var(--primary-color);
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        
+        /* Конкретные позиции для нашей архитектурной диаграммы */
+        .object-storage {
+            top: 50px;
+            left: 50px;
+            width: 150px;
+        }
+        
+        .metadata-hub {
+            top: 50px;
+            right: 50px;
+            width: 150px;
+        }
+        
+        .data-proc {
+            bottom: 50px;
+            left: 180px;
+            width: 200px;
+        }
+        
+        .trino {
+            bottom: 50px;
+            right: 180px;
+            width: 200px;
+        }
+        
+        /* Стрелки */
+        .arrow1 {
+            top: 100px;
+            left: 210px;
+            width: 150px;
+        }
+        
+        .arrow2 {
+            top: 200px;
+            left: 125px;
+            transform: rotate(45deg);
+            width: 120px;
+        }
+        
+        .arrow3 {
+            top: 200px;
+            right: 125px;
+            transform: rotate(-45deg);
+            width: 120px;
+        }
+        
+        .arrow4 {
+            bottom: 80px;
+            left: 390px;
+            width: 180px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Сервисы Яндекс Облака для задачи S3 + Spark + Hive + Trino</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <section class="intro">
+            <p>Данный документ представляет собой обзор сервисов Яндекс Облака, подобранных для решения задачи построения аналитической платформы с использованием компонентов S3 + Spark + Hive + Trino. Здесь рассмотрены соответствующие сервисы, их характеристики, возможности интеграции и преимущества.</p>
+        </section>
+        
+        <section class="architecture">
+            <h2>Архитектура решения</h2>
+            <p>Ниже представлена упрощенная схема архитектуры решения с использованием сервисов Яндекс Облака:</p>
+            
+            <div class="architecture-diagram">
+                <div class="diagram-box object-storage">Yandex Object Storage<br>(S3-совместимое хранилище)</div>
+                <div class="diagram-box metadata-hub">Yandex MetaData Hub<br>(Hive Metastore)</div>
+                <div class="diagram-box data-proc">Yandex Data Processing<br>(Spark)</div>
+                <div class="diagram-box trino">Yandex Managed Service for Trino<br>(альтернатива Impala)</div>
+                
+                <div class="diagram-arrow arrow1"></div>
+                <div class="diagram-arrow arrow2"></div>
+                <div class="diagram-arrow arrow3"></div>
+                <div class="diagram-arrow arrow4"></div>
+            </div>
+            
+            <p>В данной архитектуре все компоненты тесно взаимодействуют друг с другом, образуя единую экосистему для хранения, обработки и анализа данных.</p>
+        </section>
+        
+        <section id="object-storage">
+            <h2>1. Yandex Object Storage (для S3)</h2>
+            <div class="service-card">
+                <h3>Описание</h3>
+                <p>Yandex Object Storage — это полностью S3-совместимое объектное хранилище в облаке Яндекса, которое может служить основой для построения Data Lake. Оно позволяет хранить и организовывать большие объемы неструктурированных данных.</p>
+                
+                <h3>Ключевые характеристики</h3>
+                <ul class="feature-list">
+                    <li>Полная совместимость с Amazon S3 API</li>
+                    <li>Поддержка стандартного и холодного хранилища для оптимизации затрат</li>
+                    <li>Несколько географических зон доступности для обеспечения отказоустойчивости</li>
+                    <li>Масштабируемость для хранения петабайт данных</li>
+                    <li>Интеграция с сервисами обработки данных Яндекс Облака</li>
+                    <li>Гибкие политики доступа и управление жизненным циклом данных</li>
+                </ul>
+                
+                <a href="https://yandex.cloud/ru/services/storage" class="link-button" target="_blank">Подробнее о Yandex Object Storage</a>
+            </div>
+        </section>
+        
+        <section id="data-processing">
+            <h2>2. Yandex Data Processing (для Spark)</h2>
+            <div class="service-card">
+                <h3>Описание</h3>
+                <p>Yandex Data Processing — это сервис для автоматического развертывания и управления кластерами Apache Spark и Hadoop в инфраструктуре Яндекс Облака. Данный сервис позволяет эффективно обрабатывать большие объемы данных с использованием распределенных вычислений.</p>
+                
+                <h3>Ключевые характеристики</h3>
+                <ul class="feature-list">
+                    <li>Автоматическое развертывание и настройка кластеров Spark и Hadoop</li>
+                    <li>Гибкий выбор размера кластера и мощности вычислительных узлов</li>
+                    <li>Поддержка легковесных кластеров Apache Spark</li>
+                    <li>Автоматическое масштабирование ресурсов на основе показателей использования CPU</li>
+                    <li>Интеграция с Object Storage для хранения данных</li>
+                    <li>Поддержка различных языков программирования (Scala, Java, Python)</li>
+                    <li>Удобные интерфейсы для работы со Spark (Spark Shell, Jupyter Notebooks)</li>
+                </ul>
+                
+                <a href="https://yandex.cloud/ru/services/data-proc" class="link-button" target="_blank">Подробнее о Yandex Data Processing</a>
+            </div>
+        </section>
+        
+        <section id="metadata-hub">
+            <h2>3. Yandex MetaData Hub (для Hive)</h2>
+            <div class="service-card">
+                <h3>Описание</h3>
+                <p>Yandex MetaData Hub — это сервис для управления метаданными в Яндекс Облаке, включающий возможность создания и управления кластерами Hive Metastore. Hive Metastore служит сервером табличных метаданных, предоставляя приложениям информацию о том, где брать данные и как их интерпретировать.</p>
+                
+                <h3>Ключевые характеристики</h3>
+                <ul class="feature-list">
+                    <li>Создание и управление кластерами Hive Metastore</li>
+                    <li>Предоставление информации клиентским приложениям о расположении и формате данных</li>
+                    <li>Управление жизненным циклом метаданных</li>
+                    <li>Интеграция с различными аналитическими инструментами</li>
+                    <li>Connection Manager для управления подключениями к источникам данных</li>
+                    <li>Поддержка Data Governance и управление метаданными</li>
+                </ul>
+                
+                <a href="https://yandex.cloud/ru/services/metadata-hub" class="link-button" target="_blank">Подробнее о Yandex MetaData Hub</a>
+            </div>
+        </section>
+        
+        <section id="trino">
+            <h2>4. Yandex Managed Service for Trino (альтернатива Impala)</h2>
+            <div class="service-card">
+                <h3>Описание</h3>
+                <p>Yandex Managed Service for Trino — это сервис для управления распределенным аналитическим SQL-движком Trino в инфраструктуре Яндекс Облака. Trino может выступать как альтернатива Impala, предоставляя возможности для выполнения интерактивных SQL-запросов к данным, хранящимся в различных источниках.</p>
+                
+                <h3>Ключевые характеристики</h3>
+                <ul class="feature-list">
+                    <li>Управление распределенным аналитическим SQL-движком Trino</li>
+                    <li>Выполнение интерактивных SQL-запросов к разнородным источникам данных</li>
+                    <li>Работа с данными из Object Storage, HDFS и других источников</li>
+                    <li>Подключение к Hive Metastore для работы с метаданными</li>
+                    <li>Система коннекторов для доступа к различным источникам данных</li>
+                    <li>Альтернатива MPP-движку Impala для быстрых ad-hoc запросов</li>
+                    <li>Находится в стадии Preview (на момент подготовки материала)</li>
+                </ul>
+                
+                <a href="https://yandex.cloud/ru/services/managed-trino" class="link-button" target="_blank">Подробнее о Yandex Managed Service for Trino</a>
+            </div>
+        </section>
+        
+        <section class="integration-section">
+            <h2>Интеграция компонентов</h2>
+            <p>В рамках решения компоненты взаимодействуют следующим образом:</p>
+            <ul class="feature-list">
+                <li><strong>Object Storage + Data Processing:</strong> Yandex Data Processing может напрямую работать с данными из Object Storage, используя S3A-коннектор для Hadoop и Spark.</li>
+                <li><strong>MetaData Hub + Data Processing:</strong> Кластеры Spark в Yandex Data Processing могут использовать Hive Metastore из MetaData Hub для работы с метаданными.</li>
+                <li><strong>Object Storage + Trino:</strong> Trino может использовать коннекторы для работы с данными, хранящимися в Object Storage.</li>
+                <li><strong>MetaData Hub + Trino:</strong> Trino подключается к Hive Metastore из MetaData Hub для получения информации о структуре таблиц и их расположении.</li>
+                <li><strong>Общая интеграция:</strong> Все компоненты интегрируются через общую систему управления Яндекс Облака, что упрощает администрирование и мониторинг.</li>
+            </ul>
+        </section>
+        
+        <section class="questions-section">
+            <h2>Вопросы для подготовки коммерческого предложения</h2>
+            
+            <div class="question-category">
+                <h3>Общие требования</h3>
+                <ul class="questions-list">
+                    <li>Какой масштаб инфраструктуры требуется (объем данных, количество пользователей, количество запросов)?</li>
+                    <li>Необходима ли отказоустойчивость на уровне зон доступности или регионов?</li>
+                    <li>Каковы требования к SLA (доступность, время отклика)?</li>
+                    <li>Существуют ли требования к локализации данных в определенных регионах?</li>
+                </ul>
+            </div>
+            
+            <div class="question-category">
+                <h3>Технические характеристики</h3>
+                <ul class="questions-list">
+                    <li>Какие версии программных компонентов требуются (Spark, Hive, Trino)?</li>
+                    <li>Какие требования к производительности для каждого компонента?</li>
+                    <li>Необходимо ли внедрение определенных расширений или плагинов?</li>
+                    <li>Какой размер кластеров требуется для каждого компонента?</li>
+                    <li>Необходима ли возможность автоматического масштабирования?</li>
+                </ul>
+            </div>
+            
+            <div class="question-category">
+                <h3>Данные и хранение</h3>
+                <ul class="questions-list">
+                    <li>Каков ожидаемый общий объем данных для хранения?</li>
+                    <li>Какова скорость роста данных (ГБ/день, ТБ/месяц)?</li>
+                    <li>Какие типы данных будут храниться (структурированные, неструктурированные)?</li>
+                    <li>Необходимо ли холодное хранилище для архивных данных?</li>
+                    <li>Каковы требования к политикам жизненного цикла данных?</li>
+                </ul>
+            </div>
+            
+            <div class="question-category">
+                <h3>Обработка и аналитика</h3>
+                <ul class="questions-list">
+                    <li>Каковы основные сценарии использования (пакетная обработка, интерактивная аналитика, потоковая обработка)?</li>
+                    <li>Какие языки и фреймворки будут использоваться (SQL, Python, Scala, Java)?</li>
+                    <li>Требуется ли поддержка потоковой обработки данных?</li>
+                    <li>Какие типы аналитических запросов будут выполняться?</li>
+                    <li>Есть ли требования к интеграции с BI-инструментами?</li>
+                </ul>
+            </div>
+            
+            <div class="question-category">
+                <h3>Бюджет и затраты</h3>
+                <ul class="questions-list">
+                    <li>Каков планируемый бюджет на инфраструктуру?</li>
+                    <li>Необходимо ли оптимизировать затраты за счет автоматического масштабирования?</li>
+                    <li>Требуется ли предварительная оценка ежемесячных затрат?</li>
+                    <li>Есть ли ограничения по максимальным затратам?</li>
+                    <li>Требуется ли гибкая модель оплаты (по запросу, резервирование ресурсов)?</li>
+                </ul>
+            </div>
+            
+            <div class="question-category">
+                <h3>Сроки и этапы</h3>
+                <ul class="questions-list">
+                    <li>Каковы сроки развертывания инфраструктуры?</li>
+                    <li>Требуется ли поэтапное внедрение компонентов?</li>
+                    <li>Есть ли критические даты для запуска определенных функций?</li>
+                    <li>Необходимо ли тестовое окружение перед продуктивным запуском?</li>
+                </ul>
+            </div>
+            
+            <div class="question-category">
+                <h3>Безопасность и соответствие</h3>
+                <ul class="questions-list">
+                    <li>Каковы требования к безопасности данных и доступу?</li>
+                    <li>Необходимо ли соответствие определенным стандартам (152-ФЗ, GDPR и т.д.)?</li>
+                    <li>Требуется ли шифрование данных при хранении и передаче?</li>
+                    <li>Необходима ли интеграция с существующими системами IAM?</li>
+                    <li>Каковы требования к аудиту доступа и операций?</li>
+                </ul>
+            </div>
+            
+            <div class="question-category">
+                <h3>Поддержка и обслуживание</h3>
+                <ul class="questions-list">
+                    <li>Какой уровень поддержки требуется (базовый, расширенный, премиум)?</li>
+                    <li>Необходима ли техническая поддержка 24/7?</li>
+                    <li>Требуется ли обучение персонала для работы с системой?</li>
+                    <li>Каковы требования к мониторингу и оповещениям?</li>
+                    <li>Необходима ли помощь в миграции существующих данных?</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>Документ подготовлен: 13 мая 2025 г.</p>
+            <p>Для получения дополнительной информации обратитесь в службу поддержки Яндекс Облака или посетите <a href="https://yandex.cloud/ru/" target="_blank">официальный сайт</a>.</p>
+        </div>
+    </footer>
+</body>
+</html>
